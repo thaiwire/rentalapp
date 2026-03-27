@@ -3,6 +3,8 @@
 import supabase from "@/config/supabase-config";
 import { IUser } from "@/interfaces";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 
 export const registerUser = async (payload: Partial<IUser>) => {
   // step1: check if user with the same email already exists
@@ -49,4 +51,58 @@ export const registerUser = async (payload: Partial<IUser>) => {
     message: "User profile created successfully.",
     data: newUser,
   };
+};
+
+export const loginUser = async ({ email, password }: Partial<IUser>) => {
+  try {
+    // step1: check if user with the email exists
+    const userResponse = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("email", email);
+    if (userResponse.error) {
+      return {
+        success: false,
+        message: userResponse.error.message || "Error fetching user.",
+      };
+    }
+
+    const user = userResponse.data[0];
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found.",
+      };
+    }
+
+    // step2: compare the provided password with the stored hashed password
+    const isPasswordValid = await bcrypt.compare(password!, user.password);
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: "Invalid password.",
+      };
+    }
+
+    // step3: if password matches, generate a JWT token and return it
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || "default_secret", {
+      expiresIn: "1d",
+    });
+
+    return {
+      success: true,
+      message: "Login successful.",
+      data: {
+        user,
+        token,
+      },
+    };
+     
+
+  } catch (error) {
+    return {
+      success: false,
+      message: "Error during login.",
+    };
+  }
 };

@@ -22,8 +22,15 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { loginUser } from "@/server-actions/users";
+
 
 function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(false);
+
   const formSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
     password: z.string().min(6, "Password must be at least 6 characters."),
@@ -41,9 +48,26 @@ function LoginPage() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    console.log(data);
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      // Do something with the form values.
+      console.log(data);
+      setLoading(true);
+      const response = await loginUser(data);
+
+      if (response.success) {
+        toast.success(response.message);
+        console.log(response);
+       // router.push("/dashboard");
+      } else {
+        toast.error(response.message);
+      }
+
+    } catch (error) {
+      toast.error("An error occurred during login. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -99,7 +123,7 @@ function LoginPage() {
                     </Field>
                   )}
                 />
-                <Controller                                  
+                <Controller
                   name="role"
                   control={form.control}
                   render={({ field, fieldState }) => (
@@ -128,13 +152,17 @@ function LoginPage() {
             </form>
           </CardContent>
           <CardFooter>
-            <Field orientation="horizontal"
-              className="flex justify-between items-center w-full">
+            <Field
+              orientation="horizontal"
+              className="flex justify-between items-center w-full"
+            >
               <span className="text-sm">
                 Don't have an account?{" "}
-                <Link href="/register" className="text-primary underline">Register</Link>
+                <Link href="/register" className="text-primary underline">
+                  Register
+                </Link>
               </span>
-              <Button type="submit" form="form-rhf-demo">
+              <Button type="submit" form="form-rhf-demo" disabled={loading}>
                 Submit
               </Button>
             </Field>
