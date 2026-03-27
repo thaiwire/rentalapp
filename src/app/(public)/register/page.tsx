@@ -22,8 +22,14 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { registerUser } from "@/server-actions/users";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 function RegisterPage() {
+  const [loading, setLoading] = React.useState(false);
+  const router = useRouter();
+
   const formSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
     password: z.string().min(6, "Password must be at least 6 characters."),
@@ -35,13 +41,26 @@ function RegisterPage() {
     defaultValues: {
       email: "",
       password: "",
-      name : ""
+      name: "",
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    console.log(data);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setLoading(true);
+      const response = await registerUser(values);
+      if (response.success) {
+        toast.success(response.message);
+        router.push("/login");
+      } else {
+        toast.error(response.message);
+      }
+
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred during registration.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -59,9 +78,7 @@ function RegisterPage() {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="form-rhf-demo-name">
-                        Name
-                      </FieldLabel>
+                      <FieldLabel htmlFor="form-rhf-demo-name">Name</FieldLabel>
                       <Input
                         {...field}
                         id="form-rhf-demo-name"
@@ -118,7 +135,6 @@ function RegisterPage() {
                     </Field>
                   )}
                 />
-                
               </FieldGroup>
             </form>
           </CardContent>
@@ -133,7 +149,7 @@ function RegisterPage() {
                   Login
                 </Link>
               </span>
-              <Button type="submit" form="form-rhf-demo">
+              <Button type="submit" form="form-rhf-demo" disabled={loading}>
                 Submit
               </Button>
             </Field>

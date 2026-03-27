@@ -1,62 +1,52 @@
 "use server";
 
-import supabaseConfig from "@/config/supabase-config";
+import supabase from "@/config/supabase-config";
 import { IUser } from "@/interfaces";
 import bcrypt from "bcryptjs";
 
-export const registerUser = async ({
-  name,
-  email,
-  password,
-}: Partial<IUser>) => {
-  try {
-    // step 1 check if user already exists
-    const userExistsResponse = await supabaseConfig
-      .from("user_profiles")
-      .select("*")
-      .eq("email", email);
-    if (userExistsResponse.data?.length) {
-      return {
-        success: false,
-        message: "User with this email already exists",
-      };
-    }
-
-    // step2 hash the password
-    const hashedPassword = await bcrypt.hash(password || "", 10);
-
-    // step 3 insert the new user into the database
-    const user = {
-      name: name || "",
-      email: email || "",
-      password: hashedPassword,
-      role: "user",
-      is_active: true,
-      created_at: new Date(),
-      profile_pic : ''
-    };
-
-    const saveUserResponse = await supabaseConfig
-      .from("user_profiles")
-      .insert([user])
-     
-
-    if (saveUserResponse.error) {
-      throw new Error(saveUserResponse.error.message);
-    }
-
-    // step 4 return success response
-    return {
-      success: true,
-      message: "User registered successfully",
-      user: saveUserResponse.data,
-    };
-
-  } catch (error) {
+export const registerUser = async (payload: Partial<IUser>) => {
+  // step1: check if user with the same email already exists
+  const { data: existingUser, error: fetchError } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("email", payload.email);
+  if (fetchError) {
     return {
       success: false,
-      message: "Error registering user",
-      error: error instanceof Error ? error.message : String(error),
+      message: fetchError?.message || "Error checking existing user.",
     };
   }
+  if (existingUser && existingUser.length > 0) {
+    return {
+      success: false,
+      message: "A user with this email already exists.",
+    };
+  }
+
+  // step2: Hash the password before storing in user_profiles
+  const hashedPassword = await bcrypt.hash(payload.password || "", 10);
+
+  console.log("Hashed password:", hashedPassword);
+  // step3: Create user profile in database
+  const rowData = {
+    ...payload,
+    password: hashedPassword,
+    is_active: true,
+    profile_pic: "",
+  };
+  const { data: newUser, error: insertError } = await supabase
+    .from("user_profiles")
+    .insert(rowData);
+
+  if (insertError) {
+    return {
+      success: false,
+      message: insertError?.message || "Error creating user profile.",
+    };
+  }
+  return {
+    success: true,
+    message: "User profile created successfully.",
+    data: newUser,
+  };
 };
