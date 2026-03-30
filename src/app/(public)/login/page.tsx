@@ -27,6 +27,8 @@ import toast from "react-hot-toast";
 import { loginUser } from "@/server-actions/users";
 
 
+
+
 function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
@@ -34,7 +36,7 @@ function LoginPage() {
   const formSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
     password: z.string().min(6, "Password must be at least 6 characters."),
-    role: z.enum(["user", "admin"], {
+    role: z.enum(["user", "admin", "support"], {
       errorMap: () => ({ message: "Please select a valid role." }),
     }),
   });
@@ -44,21 +46,23 @@ function LoginPage() {
     defaultValues: {
       email: "",
       password: "",
-      role: "admin",
+      role: "user",
     },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
       // Do something with the form values.
-      console.log(data);
+      
       setLoading(true);
-      const response = await loginUser(data);
+      const response:any = await loginUser(data);
+      console.log(data);
 
       if (response.success) {
+
         toast.success(response.message);
         console.log(response);
-       // router.push("/dashboard");
+        router.push(`/${data.role}/dashboard`);
       } else {
         toast.error(response.message);
       }
@@ -140,6 +144,10 @@ function LoginPage() {
                         <div className="flex items-center gap-3">
                           <RadioGroupItem value="user" id="role-user" />
                           <Label htmlFor="role-user">user</Label>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value="support" id="role-support" />
+                          <Label htmlFor="role-support">support</Label>
                         </div>
                       </RadioGroup>
                       {fieldState.invalid && (

@@ -6,7 +6,7 @@ export interface IUser {
     email: string;
     profile_pic : string;
     password: string;
-    role: "admin" | "user";
+    role: "admin" | "user" | "support";
     is_active: boolean;
     created_at: Date;
 }
