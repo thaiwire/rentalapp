@@ -3,6 +3,7 @@ import { Montserrat, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import {Toaster} from "react-hot-toast";
+import LayoutProvider from "@/layout-provider";
 
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -26,10 +27,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", montserrat.variable, "font-sans", geist.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        montserrat.variable,
+        "font-sans",
+        geist.variable,
+      )}
     >
-      <body className="min-h-full flex flex-col">{children}
-      <Toaster />
+      <body className="min-h-full flex flex-col">
+        <LayoutProvider>{children}</LayoutProvider>
+        <Toaster />
       </body>
     </html>
   );

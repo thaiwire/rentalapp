@@ -24,7 +24,7 @@ function LogoutButton() {
     }
   };
 
-  return <Button onClick={onClick} className="w-max">Logout</Button>;
+  return <Button onClick={onClick} >Logout</Button>;
 }
 
 export default LogoutButton;

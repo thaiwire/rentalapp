@@ -1,20 +1,17 @@
+'use client';
 import LogoutButton from "@/components/functional/logout-button";
 import { IUser } from "@/interfaces";
-import { getLoggedInUser } from "@/server-actions/users";
+import usersGlobalStore, { IUsersGlobalStore } from "@/store/users-store";
+
 import React from "react";
 
 
 
-async function AdminDashboardPage() {
-  const userResponse = await getLoggedInUser();
-
-  if (!userResponse.success) {
-    return "Unauthorized";
-  }
+function AdminDashboardPage() {
   
-  const user:IUser = userResponse.data;
+  const {user} = usersGlobalStore() as IUsersGlobalStore;
 
-  if (user.role !== "admin") {
+  if (!user) {
     return "Unauthorized";
   }
 
@@ -26,7 +23,7 @@ async function AdminDashboardPage() {
       <p>Welcome, {user.email}!</p>
       <p>Your role: {user.role}</p>
       
-      <LogoutButton />
+     
     </div>
   );
 }

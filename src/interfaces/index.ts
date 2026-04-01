@@ -10,3 +10,13 @@ export interface IUser {
     is_active: boolean;
     created_at: Date;
 }
+
+export interface ICategory {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  created_at: Date;
+  updated_at: Date;
+  user_id: string;
+}
