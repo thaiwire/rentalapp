@@ -5,9 +5,39 @@ import { ICategory } from "@/interfaces";
 
 export const createCategory = async (category: Partial<ICategory>) => {
   try {
+    const trimmedName = category.name?.trim();
+    console.log("Creating category with name:", trimmedName);
+
+    if (!trimmedName) {
+      return {
+        success: false,
+        message: "Category name is required.",
+      };
+    }
+
+    // Check for an existing category with the same name.
+    const { data: existingCategory, error: existingError } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("name", trimmedName)
+      .maybeSingle();
+
+    if (existingError) {
+      throw new Error(existingError.message);
+    }
+    if (existingCategory) {
+      return {
+        success: false,
+        message: "Category with the same name already exists.",
+      };
+    }
+
     const { data, error } = await supabase
       .from("categories")
-      .insert(category)
+      .insert({
+        ...category,
+        name: trimmedName,
+      })
       .select();
     if (error) {
       throw new Error(error.message);
@@ -52,9 +82,41 @@ export const getAllCategories = async () => {
 
 export const updateCategoryById = async (id: string, category: Partial<ICategory>) => {
   try {
+    const trimmedName = category.name?.trim();
+
+    if (category.name && !trimmedName) {
+      return {
+        success: false,
+        message: "Category name is required.",
+      };
+    }
+
+    if (trimmedName) {
+      // Check for an existing category with the same name.
+      const { data: existingCategory, error: existingError } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("name", trimmedName)
+        .neq("id", id)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new Error(existingError.message);
+      }
+      if (existingCategory) {
+        return {
+          success: false,
+          message: "Category with the same name already exists.",
+        };
+      }
+    }
+
     const { data, error } = await supabase
       .from("categories")
-      .update(category)
+      .update({
+        ...category,
+        ...(trimmedName ? { name: trimmedName } : {}),
+      })
       .eq("id", id);
       
     if (error) {

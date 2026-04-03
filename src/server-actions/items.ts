@@ -1,7 +1,4 @@
-import { get } from "http";
-import { metadata } from "./../app/layout";
-("use server");
-
+"use server";
 import supabase from "@/config/supabase-config";
 import { ItemInterface } from "@/interfaces";
 

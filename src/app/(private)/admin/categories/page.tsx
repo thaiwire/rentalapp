@@ -1,6 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import PageTitle from "@/components/ui/page-title";
 import { ICategory } from "@/interfaces";
 import React from "react";
@@ -13,23 +21,20 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import dayjs from "dayjs";
-import Spinner from "@/components/ui/spinner";
-import { Info } from "lucide-react";
 import InfoMessage from "@/components/functional/info-message";
-import { set } from "zod";
 
 function CategoriesPage() {
   const [openCategoryForm, setOpenCategoryForm] = React.useState(false);
   const [formType, setFormType] = React.useState<"add" | "edit">("add");
   const [selectedCategory, setSelectedCategory] =
+    React.useState<ICategory | null>(null);
+  const [categoryToDelete, setCategoryToDelete] =
     React.useState<ICategory | null>(null);
 
   const [categories, setCategories] = React.useState<ICategory[]>([]);
@@ -55,27 +60,27 @@ function CategoriesPage() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    // Implement delete functionality here
-    // toast.error("Delete functionality is not implemented yet.");
     try {
       setLoading(true);
-      // Call your delete API here, for example
       const response = await deleteCategoryById(id);
       if (!response.success) {
         throw new Error(response.message);
-        return;
       }
+
       toast.success("Category deleted successfully.");
-      // Refresh the category list after deletion
       setCategories((prevCategories) =>
         prevCategories.filter((category) => category.id !== id),
       );
-
+      setCategoryToDelete(null);
     } catch (error) {
       toast.error("Failed to delete category. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const openDeleteDialog = (category: ICategory) => {
+    setCategoryToDelete(category);
   };
 
   React.useEffect(() => {
@@ -148,7 +153,7 @@ function CategoriesPage() {
                     variant="outline"
                     size="sm"
                     className="text-red-500 border-red-500"
-                    onClick={() => handleDeleteCategory(item.id)}
+                    onClick={() => openDeleteDialog(item)}
                   >
                     Delete
                   </Button>
@@ -159,6 +164,8 @@ function CategoriesPage() {
         </TableBody>
       </Table>
 
+      
+
       {openCategoryForm && (
         <CategoryFormModal
           open={openCategoryForm}
@@ -168,6 +175,46 @@ function CategoriesPage() {
           onSuccess={getData}
         />
       )}
+
+      <Dialog
+        open={Boolean(categoryToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !loading) {
+            setCategoryToDelete(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={!loading}>
+          <DialogHeader>
+            <DialogTitle>Delete category?</DialogTitle>
+            <DialogDescription>
+              {categoryToDelete
+                ? `Are you sure you want to delete ${categoryToDelete.name}? This action cannot be undone.`
+                : "Are you sure you want to delete this category?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCategoryToDelete(null)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                categoryToDelete && handleDeleteCategory(categoryToDelete.id)
+              }
+              disabled={loading || !categoryToDelete}
+            >
+              {loading ? "Deleting..." : "Confirm Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
